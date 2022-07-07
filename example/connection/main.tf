@@ -3,22 +3,40 @@ provider "auth0" {
 }
 
 resource "auth0_connection" "my_connection" {
-  name     = "Example-Connection"
-  strategy = "auth0"
+  name                 = "Example-Connection"
+  is_domain_connection = true
+  strategy             = "auth0"
+  metadata = {
+    key1 = "foo"
+    key2 = "bar"
+  }
   options {
     password_policy = "excellent"
     password_history {
       enable = true
       size   = 3
     }
+    password_no_personal_info {
+      enable = true
+    }
+    password_dictionary {
+      enable     = true
+      dictionary = ["password", "admin", "1234"]
+    }
+    password_complexity_options {
+      min_length = 12
+    }
     validation {
       username {
-        min = 5
-        max = 20
+        min = 10
+        max = 40
       }
     }
     brute_force_protection         = true
     enabled_database_customization = true
+    import_mode                    = false
+    requires_username              = true
+    disable_signup                 = false
     custom_scripts = {
       get_user = <<EOF
 function getByEmail (email, callback) {
@@ -26,10 +44,18 @@ function getByEmail (email, callback) {
 }
 EOF
     }
-
     configuration = {
       foo = "bar"
       bar = "baz"
     }
+    mfa {
+      active                 = true
+      return_enroll_settings = true
+    }
+    upstream_params = jsonencode({
+      "screen_name" : {
+        "alias" : "login_hint"
+      }
+    })
   }
 }
